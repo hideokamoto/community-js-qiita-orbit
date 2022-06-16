@@ -29,8 +29,7 @@ USAGE
 <!-- usagestop -->
 # Commands
 <!-- commands -->
-* [`orbit-qiita hello PERSON`](#orbit-qiita-hello-person)
-* [`orbit-qiita hello world`](#orbit-qiita-hello-world)
+* [`orbit-qiita activities put KEYWORD`](#orbit-qiita-activities-put-keyword)
 * [`orbit-qiita help [COMMAND]`](#orbit-qiita-help-command)
 * [`orbit-qiita plugins`](#orbit-qiita-plugins)
 * [`orbit-qiita plugins:install PLUGIN...`](#orbit-qiita-pluginsinstall-plugin)
@@ -41,45 +40,28 @@ USAGE
 * [`orbit-qiita plugins:uninstall PLUGIN...`](#orbit-qiita-pluginsuninstall-plugin-1)
 * [`orbit-qiita plugins:uninstall PLUGIN...`](#orbit-qiita-pluginsuninstall-plugin-2)
 * [`orbit-qiita plugins update`](#orbit-qiita-plugins-update)
+* [`orbit-qiita search members KEYWORD`](#orbit-qiita-search-members-keyword)
+* [`orbit-qiita search posts KEYWORD`](#orbit-qiita-search-posts-keyword)
 
-## `orbit-qiita hello PERSON`
+## `orbit-qiita activities put KEYWORD`
 
-Say hello
+Put contenct creation activity to Orbit
 
 ```
 USAGE
-  $ orbit-qiita hello [PERSON] -f <value>
+  $ orbit-qiita activities put [KEYWORD] [-d]
 
 ARGUMENTS
-  PERSON  Person to say hello to
+  KEYWORD  Search keyword
 
 FLAGS
-  -f, --from=<value>  (required) Whom is saying hello
+  -d, --debug  Show process log
 
 DESCRIPTION
-  Say hello
+  Put contenct creation activity to Orbit
 
 EXAMPLES
-  $ oex hello friend --from oclif
-  hello friend from oclif! (./src/commands/hello/index.ts)
-```
-
-_See code: [dist/commands/hello/index.ts](https://github.com/hideokamoto-stripe/community-js-qiita-orbit/blob/v0.0.0/dist/commands/hello/index.ts)_
-
-## `orbit-qiita hello world`
-
-Say hello world
-
-```
-USAGE
-  $ orbit-qiita hello world
-
-DESCRIPTION
-  Say hello world
-
-EXAMPLES
-  $ oex hello world
-  hello world! (./src/commands/hello/world.ts)
+  $ orbit-qiita activities put <keyword>: Put contenct creation activity to Orbit
 ```
 
 ## `orbit-qiita help [COMMAND]`
@@ -330,5 +312,55 @@ FLAGS
 
 DESCRIPTION
   Update installed plugins.
+```
+
+## `orbit-qiita search members KEYWORD`
+
+Search Orbit member by the username each source.
+
+```
+USAGE
+  $ orbit-qiita search members [KEYWORD] [-f json|table] [-t <value>]
+
+ARGUMENTS
+  KEYWORD  Search keyword
+
+FLAGS
+  -f, --format=(json|table)  [default: json]
+  -t, --target=<value>       [default: tag]
+
+DESCRIPTION
+  Search Orbit member by the username each source.
+
+EXAMPLES
+  $ orbit-qiita search members username -t twitter : search username from Twitter source
+
+  $ orbit-qiita search members username -t Custom : search username from custom source
+
+  $ orbit-qiita search members username -t Custom -f table : Show result as a table
+```
+
+## `orbit-qiita search posts KEYWORD`
+
+search Qiita posts
+
+```
+USAGE
+  $ orbit-qiita search posts [KEYWORD] [-f json|table] [-t <value>]
+
+ARGUMENTS
+  KEYWORD  Search keyword
+
+FLAGS
+  -f, --format=(json|table)  [default: json]
+  -t, --target=<value>       [default: tag]
+
+DESCRIPTION
+  search Qiita posts
+
+EXAMPLES
+  $ orbit-qiita search posts qiita : search by tag
+
+  $ orbit-qiita search posts qiita -f table : search by tag (table style)
 ```
 <!-- commandsstop -->
