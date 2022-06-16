@@ -13,8 +13,3 @@ export class Orbit {
     this.activities = new OrbitActivities(client)
   }
 }
-
-export const OrbitClient = new Orbit({
-  workspaceName: process.env.ORBIT_WS_NAME as string,
-  apiKey: process.env.ORBIT_API_KEY as string,
-})
