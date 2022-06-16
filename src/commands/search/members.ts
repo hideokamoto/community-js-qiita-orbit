@@ -1,7 +1,8 @@
 import {Command, Flags} from '@oclif/core'
 import * as Table from 'cli-table3'
 import * as dayjs from 'dayjs'
-import {OrbitClient} from '../../lib/api/orbit'
+import {Orbit} from '../../lib/api/orbit'
+import '../../lib/env'
 
 export default class SearchMembers extends Command {
   static description = 'Search Orbit member by the username each source.'
@@ -10,6 +11,7 @@ export default class SearchMembers extends Command {
     'orbit-qiita search members username -t twitter : search username from Twitter source',
     'orbit-qiita search members username -t Custom : search username from custom source',
     'orbit-qiita search members username -t Custom -f table : Show result as a table',
+    'orbit-qiita search members username -t Custom -w orbit-workspace-name -a obw_xxx',
   ]
 
   static flags = {
@@ -22,6 +24,16 @@ export default class SearchMembers extends Command {
       char: 't',
       default: 'tag',
     }),
+    'api-key': Flags.string({
+      char: 'a',
+      description: 'Orbit API key',
+      default: process.env.ORBIT_API_KEY as string,
+    }),
+    'workspace-name': Flags.string({
+      char: 'w',
+      description: 'Orbit workspace name',
+      default: process.env.ORBIT_WS_NAME as string,
+    }),
   }
 
   static args = [{
@@ -30,9 +42,18 @@ export default class SearchMembers extends Command {
     description: 'Search keyword',
   }]
 
+  private async getOrbitClient() {
+    const {flags: {'api-key': apiKey, 'workspace-name': wsName}} = await this.parse(SearchMembers)
+    return new Orbit({
+      workspaceName: wsName,
+      apiKey: apiKey,
+    })
+  }
+
   public async run(): Promise<void> {
     const {args: {keyword}, flags: {target, format}} = await this.parse(SearchMembers)
 
+    const OrbitClient = await this.getOrbitClient()
     const member = await OrbitClient.members.searchBySource(target, keyword)
     if (format === 'json') {
       this.log(JSON.stringify(member))

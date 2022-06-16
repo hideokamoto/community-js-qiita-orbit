@@ -1,9 +1,10 @@
 import {Command, Flags} from '@oclif/core'
-import {OrbitClient} from '../../lib/api/orbit'
+import {Orbit} from '../../lib/api/orbit'
 import {ContentActivity} from '../../lib/api/orbit/activities'
 import {PutMemberRequest} from '../../lib/api/orbit/members'
 import {ParsedQiitaPost, parseQiitaPosts} from '../../lib/qiita/parser'
 import {listQiitaPostsByTag} from '../../lib/qiita/tag'
+import '../../lib/env'
 
 export type OrbitMemberWithQiitaUsername = {
   [username: string]: null | {
@@ -17,10 +18,21 @@ export default class ActivitiesPut extends Command {
 
   static examples = [
     'orbit-qiita activities put <keyword>: Put contenct creation activity to Orbit',
+    'orbit-qiita activities put <keyword> -w orbit-workspace-name -a obw_xxx : Put contenct creation activity to Orbit',
   ]
 
   static flags = {
     debug: Flags.boolean({char: 'd', description: 'Show process log', default: false}),
+    'api-key': Flags.string({
+      char: 'a',
+      description: 'Orbit API key',
+      default: process.env.ORBIT_API_KEY as string,
+    }),
+    'workspace-name': Flags.string({
+      char: 'w',
+      description: 'Orbit workspace name',
+      default: process.env.ORBIT_WS_NAME as string,
+    }),
   }
 
   static args = [{
@@ -28,6 +40,14 @@ export default class ActivitiesPut extends Command {
     required: true,
     description: 'Search keyword',
   }]
+
+  private async getOrbitClient() {
+    const {flags: {'api-key': apiKey, 'workspace-name': wsName}} = await this.parse(ActivitiesPut)
+    return new Orbit({
+      workspaceName: wsName,
+      apiKey: apiKey,
+    })
+  }
 
   public async run(): Promise<void> {
     const {flags: {debug}, args: {keyword}} = await this.parse(ActivitiesPut)
@@ -66,6 +86,7 @@ export default class ActivitiesPut extends Command {
       url: post.url,
       occurred_at: post.created_at,
     }
+    const OrbitClient = await this.getOrbitClient()
     const putActivityResult = await OrbitClient.activities.putContentActivity(orbitMemberSlug, contentActivity)
     if (this.isDebug) console.log(putActivityResult)
     const updateMemberAttributes: Partial<PutMemberRequest['member']> = {}
@@ -102,6 +123,7 @@ export default class ActivitiesPut extends Command {
     if (user.description) memberProps.bio = user.description
     if (post.tags) memberProps.tags_to_add = post.tags.join(',')
     if (this.isDebug) console.log({user, memberProps})
+    const OrbitClient = await this.getOrbitClient()
     const putActivityResult = await OrbitClient.activities.putActivityWithMemberData({
       activity: {
         ...contentActivity,
@@ -123,6 +145,7 @@ export default class ActivitiesPut extends Command {
 
     for await (const authorName of authorNames) {
       try {
+        const OrbitClient = await this.getOrbitClient()
         const member = await OrbitClient.members.searchBySource('Qiita', authorName)
         if (member) {
           orbitMembers[authorName] = {
