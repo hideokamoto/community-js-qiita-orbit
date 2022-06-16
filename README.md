@@ -20,7 +20,7 @@ $ npm install -g community-js-qiita-orbit
 $ orbit-qiita COMMAND
 running command...
 $ orbit-qiita (--version)
-community-js-qiita-orbit/0.0.0 darwin-x64 node-v14.18.1
+community-js-qiita-orbit/0.0.0 darwin-x64 node-v16.13.1
 $ orbit-qiita --help [COMMAND]
 USAGE
   $ orbit-qiita COMMAND
