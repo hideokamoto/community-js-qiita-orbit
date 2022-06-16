@@ -1,6 +1,6 @@
 {
   "name": "community-js-qiita-orbit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "oclif example Hello World CLI",
   "author": "Hidetaka Okamoto @hideokamoto-stripe",
   "bin": {
