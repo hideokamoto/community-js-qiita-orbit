@@ -33,6 +33,11 @@ export default class ActivitiesPut extends Command {
       description: 'Orbit workspace name',
       default: process.env.ORBIT_WS_NAME as string,
     }),
+    'update-member-data': Flags.boolean({
+      char: 'U',
+      description: 'Update Orbit member data using Qiita profile',
+      default: false,
+    }),
   }
 
   static args = [{
@@ -50,37 +55,72 @@ export default class ActivitiesPut extends Command {
   }
 
   public async run(): Promise<void> {
-    const {flags: {debug}, args: {keyword}} = await this.parse(ActivitiesPut)
+    const {flags: {debug, 'update-member-data': updateMemberData}, args: {keyword}} = await this.parse(ActivitiesPut)
     this.isDebug = debug
 
     const response = await listQiitaPostsByTag(keyword)
     const posts = parseQiitaPosts(response)
     const orbitMembers = await this._listOrbitMemberByPosts(posts)
 
+    const results: {
+      [username: string]: Array<{
+        stauts: 'put_activity' | 'create_new_member' | 'skip' | 'error',
+        message?: string;
+        url?: string;
+        created_at?: string;
+      }>
+    } = {}
     for await (const post of posts) {
+      if (!results[post.username]) results[post.username] = []
       try {
         if (debug) console.log({username: post.username})
         const orbitMember = orbitMembers[post.username]
         if (debug) console.log({orbitMember})
         if (orbitMember) {
-          await this._putMemberActivity(orbitMember.slug, post)
+          await this._putMemberActivity(orbitMember.slug, post, {
+            updateMemberData,
+          })
+          results[post.username].push({
+            stauts: 'put_activity',
+            url: post.url,
+            created_at: post.created_at,
+          })
         } else {
           await this._putNewMemberActivity(post)
+          results[post.username].push({
+            stauts: 'create_new_member',
+            url: post.url,
+            created_at: post.created_at,
+          })
         }
       } catch (error) {
         if ((error as any).response.status !== 422) {
           if (debug) console.log(error)
+          results[post.username].push({
+            stauts: 'error',
+            message: `${(error as Error).name}: ${(error as Error).message}`,
+            url: post.url,
+            created_at: post.created_at,
+          })
           throw error
         }
+
+        results[post.username].push({
+          stauts: 'skip',
+          url: post.url,
+          created_at: post.created_at,
+        })
 
         console.log(error)
       }
     }
 
-    this.log(JSON.stringify(orbitMembers))
+    this.log(JSON.stringify(results))
   }
 
-  private async _putMemberActivity(orbitMemberSlug: string, post: ParsedQiitaPost) {
+  private async _putMemberActivity(orbitMemberSlug: string, post: ParsedQiitaPost, options: {
+    updateMemberData: boolean;
+  }) {
     const contentActivity: ContentActivity = {
       activity_type: 'content',
       url: post.url,
@@ -99,9 +139,21 @@ export default class ActivitiesPut extends Command {
     if (user.location) updateMemberAttributes.location = user.location
     if (user.description) updateMemberAttributes.bio = user.description
     if (this.isDebug) console.log(updateMemberAttributes)
-    if (Object.keys(updateMemberAttributes).length > 0) {
-      const updateMemberResult = await OrbitClient.members.updateMember(orbitMemberSlug, updateMemberAttributes)
-      if (this.isDebug) console.log(updateMemberResult)
+    if (options.updateMemberData) {
+      try {
+        if (Object.keys(updateMemberAttributes).length > 0) {
+          const updateMemberResult = await OrbitClient.members.updateMember(orbitMemberSlug, updateMemberAttributes)
+          if (this.isDebug) console.log(updateMemberResult)
+        }
+      } catch (error) {
+        console.log(error)
+        if (this.isDebug) {
+          console.log({
+            user,
+            message: 'Failed to update member data',
+          })
+        }
+      }
     }
   }
 
